@@ -62,7 +62,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::782545587425:role/soakoto-terraform-multi-env-github-actions-role
+          role-to-assume: arn:aws:iam::782545587425:role/agriculture-data-pipeline-github-actions-role
           role-session-name: TerraformPlan
           aws-region: us-east-1
 

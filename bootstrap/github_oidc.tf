@@ -1,10 +1,16 @@
-resource "aws_iam_openid_connect_provider" "github" {
+# The GitHub Actions OIDC provider already exists at the account level.
+# Look it up rather than trying to create a duplicate provider.
+data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
-
-  client_id_list = [
-    "sts.amazonaws.com"
-  ]
 }
+
+# resource "aws_iam_openid_connect_provider" "github" {
+#   url = "https://token.actions.githubusercontent.com"
+#
+#   client_id_list = [
+#     "sts.amazonaws.com"
+#   ]
+# }
 
 resource "aws_iam_role" "github_actions" {
   name = "agriculture-data-pipeline-github-actions-role"
@@ -17,7 +23,7 @@ resource "aws_iam_role" "github_actions" {
         Effect = "Allow"
 
         Principal = {
-          Federated = aws_iam_openid_connect_provider.github.arn
+          Federated = data.aws_iam_openid_connect_provider.github.arn
         }
 
         Action = "sts:AssumeRoleWithWebIdentity"
@@ -28,7 +34,7 @@ resource "aws_iam_role" "github_actions" {
           }
 
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:artemsaitov@62581140/aws-agriculture-data-pipeline@1389941062:*"
+            "token.actions.githubusercontent.com:sub" = "repo:soakoto/aws-agriculture-data-pipeline:*"
           }
         }
       }
