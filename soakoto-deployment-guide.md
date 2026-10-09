@@ -189,7 +189,7 @@ The current files do not line up for a first deployment:
 
 1. **State bucket name:** `bootstrap/main.tf` creates a bucket with a generated suffix, but `terraform/backend.tf` names a fixed bucket, `agri-pipeline-tfstate-soakoto`. After bootstrapping, make the application backend use the bucket name printed by the bootstrap output. The fixed bucket will work only if it already exists and is the intended backend.
 2. **Role name:** `bootstrap/github_oidc.tf` creates `agriculture-data-pipeline-github-actions-role`. Both GitHub workflows instead try to assume `soakoto-terraform-multi-env-github-actions-role`. Update the `role-to-assume` ARN in `terraform-ci.yml` and `terraform-deploy.yml` to the actual AWS account and bootstrap role.
-3. **OIDC repository trust:** The subject in `bootstrap/github_oidc.tf` is currently `repo:artemsaitov@62581140/aws-agriculture-data-pipeline@1389941062:*`. GitHub’s standard subject format is `repo:<OWNER>/aws-agriculture-data-pipeline:*`; use the repository’s actual owner/name or AWS will reject the workflow’s OIDC assumption.
+3. **OIDC repository trust:** `bootstrap/github_oidc.tf` uses GitHub's immutable owner and repository IDs in the subject condition. Supply the IDs shown in the repository's **Settings → Actions → General → OpenID Connect** page as `TF_VAR_github_owner_id` and `TF_VAR_github_repository_id`; the trust remains restricted to this repository.
 
 Also note: bootstrap has no remote backend configuration, so **its own Terraform state is local**. Preserve that state file; the S3 bucket it creates is configured as the *application* stack’s backend.
 
@@ -205,7 +205,12 @@ cd aws-agriculture-data-pipeline/bootstrap
 AWS_PROFILE=my-aws terraform init
 AWS_PROFILE=my-aws terraform fmt -check
 AWS_PROFILE=my-aws terraform validate
+TF_VAR_github_owner_id=<OWNER_ID> \
+TF_VAR_github_repository_id=<REPO_ID> \
 AWS_PROFILE=my-aws terraform plan
+
+TF_VAR_github_owner_id=<OWNER_ID> \
+TF_VAR_github_repository_id=<REPO_ID> \
 AWS_PROFILE=my-aws terraform apply
 
 AWS_PROFILE=my-aws terraform output -raw terraform_state_bucket
@@ -250,7 +255,7 @@ Terraform’s references encode these dependencies, so a single `terraform apply
 In the GitHub repository:
 
 - Set the repository secret **`TF_VAR_alert_email`**; both workflows pass it to Terraform.
-- Ensure the bootstrap role’s OIDC trust matches the real repository owner/name.
+- Ensure `TF_VAR_github_owner_id` and `TF_VAR_github_repository_id` match the immutable IDs shown in GitHub's OIDC settings before applying bootstrap changes.
 - Update both workflow role ARNs to match the bootstrap-created role and AWS account.
 - Keep the application backend bucket aligned with the bootstrap output.
 
