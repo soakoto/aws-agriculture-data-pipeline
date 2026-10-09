@@ -33,8 +33,10 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
 
+          # GitHub's immutable-ID subject includes both the owner and repository IDs.
+          # The wildcard allows refs/environments under this repository only.
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:soakoto/aws-agriculture-data-pipeline:*"
+            "token.actions.githubusercontent.com:sub" = "repo:soakoto@${var.github_owner_id}/aws-agriculture-data-pipeline@${var.github_repository_id}:*"
           }
         }
       }
